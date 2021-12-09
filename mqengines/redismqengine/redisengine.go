@@ -85,7 +85,7 @@ func (r *RedisEngine) ReadBlock(key string, count int64, onRead func(contents []
 
 func (r *RedisEngine) read(key string, blockTime time.Duration, count int64, onRead func(contents []string) error) error {
 	streams, err := r.client.XRead(ctx, &redis.XReadArgs{
-		Streams: []string{key, "0"},
+		Streams: []string{key, "$"},
 		Count:   count,
 		Block:   blockTime,
 	}).Result()
