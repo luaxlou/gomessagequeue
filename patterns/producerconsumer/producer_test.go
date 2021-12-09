@@ -30,7 +30,7 @@ func TestProducer_Produce(t *testing.T) {
 		for i := 0; i < 100000; i++ {
 			p.Produce("key", strconv.Itoa(i))
 
-			time.Sleep(time.Millisecond * 10)
+			time.Sleep(time.Second * 1)
 		}
 
 	}()

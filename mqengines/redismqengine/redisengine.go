@@ -58,16 +58,16 @@ func (r *RedisEngine) Add(key string, content string) error {
 	return err
 }
 
-func (r *RedisEngine) Read(key string, count int64, onRead func(contents []string) error) {
+func (r *RedisEngine) Read(key string, group string, count int64, onRead func(contents []string) error) {
 
-	r.read(key, 0, count, onRead)
+	r.read(key, group, -1, count, onRead)
 }
 
-func (r *RedisEngine) ReadBlock(key string, count int64, onRead func(contents []string) error) {
+func (r *RedisEngine) ReadBlock(key string, group string, count int64, onRead func(contents []string) error) {
 
 	for {
 
-		err := r.read(key, time.Minute, count, onRead)
+		err := r.read(key, group, time.Minute, count, onRead)
 
 		if err != nil {
 
@@ -83,9 +83,13 @@ func (r *RedisEngine) ReadBlock(key string, count int64, onRead func(contents []
 
 }
 
-func (r *RedisEngine) read(key string, blockTime time.Duration, count int64, onRead func(contents []string) error) error {
-	streams, err := r.client.XRead(ctx, &redis.XReadArgs{
-		Streams: []string{key, "$"},
+func (r *RedisEngine) read(key string, group string, blockTime time.Duration, count int64, onRead func(contents []string) error) error {
+
+	err := r.client.XGroupCreate(ctx, key, group, "$").Err()
+
+	streams, err := r.client.XReadGroup(ctx, &redis.XReadGroupArgs{
+		Streams: []string{key, ">"},
+		Group:   group,
 		Count:   count,
 		Block:   blockTime,
 	}).Result()
@@ -129,7 +133,7 @@ func (r *RedisEngine) read(key string, blockTime time.Duration, count int64, onR
 
 	}
 
-	r.client.XDel(ctx, key, ids...)
+ 	r.client.XDel(ctx, key, ids...)
 
 	return nil
 }

@@ -26,11 +26,30 @@ func TestConsumer_Consume_Black(t *testing.T) {
 
 	c := NewConsumer(engine)
 
-	c.ConsumeBlock("key", 1000, func(contents []string) error {
 
-		log.Println(contents)
+	go func() {
+		c.ConsumeBlock("key", 1000, func(contents []string) error {
 
-		return nil
-	})
+			log.Println(contents)
+
+			return nil
+		})
+
+	}()
+
+
+	go func() {
+		c.ConsumeBlock("key", 1000, func(contents []string) error {
+
+			log.Println(contents)
+
+			return nil
+		})
+
+	}()
+
+	select {
+
+	}
 
 }
