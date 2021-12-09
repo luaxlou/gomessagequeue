@@ -11,9 +11,9 @@ func TestNewConsumer(t *testing.T) {
 
 	c := NewConsumer(engine)
 
-	c.Consume("key", 1000, func(data []interface{}) error {
+	c.Consume("key", 1000, func(contents []string) error {
 
-		log.Println(data)
+		log.Println(contents)
 
 		return nil
 	})

@@ -13,7 +13,8 @@ func NewProducer(engine mqengines.MqEngine) *Producer {
 	}
 }
 
-func (p *Producer) Produce(key string, data interface{}) error {
+//考虑到数据的多样性，使用string兼容所有结构，如果是对象类型，可以序列化后传输
+func (p *Producer) Produce(key string, content string) error {
 
-	return p.engine.Add(key, data)
+	return p.engine.Add(key, content)
 }

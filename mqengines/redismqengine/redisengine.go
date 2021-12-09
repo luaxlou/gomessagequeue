@@ -44,14 +44,13 @@ func NewWithClient(c *redis.Client) (mqengines.MqEngine, error) {
 	return &RedisEngine{client: c}, nil
 }
 
-func (r *RedisEngine) Add(key string, data interface{}) error {
+func (r *RedisEngine) Add(key string, content string) error {
 
 	args := &redis.XAddArgs{
 		MaxLen: 100000,
 		Stream: key,
 		Values: map[string]interface{}{
-			"ts":   time.Now().Unix(),
-			"data": data,
+			"content": content,
 		},
 	}
 	_, err := r.client.XAdd(ctx, args).Result()
@@ -59,7 +58,7 @@ func (r *RedisEngine) Add(key string, data interface{}) error {
 	return err
 }
 
-func (r *RedisEngine) Read(key string, count int64, onRead func(ds []interface{}) error) {
+func (r *RedisEngine) Read(key string, count int64, onRead func(contents []string) error) {
 
 	for {
 		streams, err := r.client.XRead(ctx, &redis.XReadArgs{
@@ -79,21 +78,28 @@ func (r *RedisEngine) Read(key string, count int64, onRead func(ds []interface{}
 		}
 
 		ids := make([]string, 0)
-		ds := make([]interface{}, 0)
+		ds := make([]string, 0)
 
 		for _, s := range streams {
 
 			for _, msg := range s.Messages {
 
-				data, ok := msg.Values["data"]
+				content, ok := msg.Values["content"]
 
 				if !ok {
 					continue
 				}
 
-				ds = append(ds, data)
 
-				ids = append(ids, msg.ID)
+				switch content.(type) {
+
+				case string:
+					ds = append(ds, content.(string))
+
+					ids = append(ids, msg.ID)
+				default:
+					continue
+				}
 
 			}
 

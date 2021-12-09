@@ -3,6 +3,7 @@ package producerconsumer
 import (
 	"github.com/luaxlou/gomessagequeue/mqengines"
 	"github.com/luaxlou/gomessagequeue/mqengines/redismqengine"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -27,7 +28,7 @@ func TestProducer_Produce(t *testing.T) {
 	go func() {
 
 		for i := 0; i < 100000; i++ {
-			p.Produce("key", i)
+			p.Produce("key", strconv.Itoa(i))
 
 			time.Sleep(time.Millisecond * 10)
 		}
