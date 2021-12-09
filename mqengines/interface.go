@@ -4,5 +4,6 @@ package mqengines
 
 type MqEngine interface {
 	Add(key string, content string) error
+	ReadBlock(key string, count int64, onRead func(contents []string) error)
 	Read(key string, count int64, onRead func(contents []string) error)
 }

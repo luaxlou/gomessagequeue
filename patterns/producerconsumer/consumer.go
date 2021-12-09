@@ -15,6 +15,11 @@ func NewConsumer(engine mqengines.MqEngine) *Consumer {
 	}
 }
 
+func (c *Consumer) ConsumeBlock(key string, count int64, onRead func(contents []string) error) {
+
+	c.engine.ReadBlock(key, count, onRead)
+}
+
 func (c *Consumer) Consume(key string, count int64, onRead func(contents []string) error) {
 
 	c.engine.Read(key, count, onRead)

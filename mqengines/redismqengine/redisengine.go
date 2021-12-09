@@ -60,14 +60,16 @@ func (r *RedisEngine) Add(key string, content string) error {
 
 func (r *RedisEngine) Read(key string, count int64, onRead func(contents []string) error) {
 
-	for {
-		streams, err := r.client.XRead(ctx, &redis.XReadArgs{
-			Streams: []string{key, "0"},
-			Count:   count,
-			Block:   time.Minute,
-		}).Result()
+	r.read(key, 0, count, onRead)
+}
 
-		if err != nil || len(streams) == 0 {
+func (r *RedisEngine) ReadBlock(key string, count int64, onRead func(contents []string) error) {
+
+	for {
+
+		err := r.read(key, time.Minute, count, onRead)
+
+		if err != nil {
 
 			if strings.Contains(err.Error(), "redis: nil") {
 				continue
@@ -77,43 +79,57 @@ func (r *RedisEngine) Read(key string, count int64, onRead func(contents []strin
 			continue
 		}
 
-		ids := make([]string, 0)
-		ds := make([]string, 0)
+	}
 
-		for _, s := range streams {
+}
 
-			for _, msg := range s.Messages {
+func (r *RedisEngine) read(key string, blockTime time.Duration, count int64, onRead func(contents []string) error) error {
+	streams, err := r.client.XRead(ctx, &redis.XReadArgs{
+		Streams: []string{key, "0"},
+		Count:   count,
+		Block:   blockTime,
+	}).Result()
 
-				content, ok := msg.Values["content"]
+	if err != nil {
 
-				if !ok {
-					continue
-				}
+		return err
+	}
 
+	ids := make([]string, 0)
+	ds := make([]string, 0)
 
-				switch content.(type) {
+	for _, s := range streams {
 
-				case string:
-					ds = append(ds, content.(string))
+		for _, msg := range s.Messages {
 
-					ids = append(ids, msg.ID)
-				default:
-					continue
-				}
+			content, ok := msg.Values["content"]
 
+			if !ok {
+				continue
+			}
+
+			switch content.(type) {
+
+			case string:
+				ds = append(ds, content.(string))
+
+				ids = append(ids, msg.ID)
+			default:
+				continue
 			}
 
 		}
 
-		if err := onRead(ds); err != nil {
+	}
 
-			log.Println(err)
-			continue
+	if err := onRead(ds); err != nil {
 
-		}
-
-		r.client.XDel(ctx, key, ids...)
+		log.Println(err)
+		return nil
 
 	}
 
+	r.client.XDel(ctx, key, ids...)
+
+	return nil
 }
