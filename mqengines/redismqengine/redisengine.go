@@ -44,10 +44,10 @@ func NewWithClient(c *redis.Client) (mqengines.MqEngine, error) {
 	return &RedisEngine{client: c}, nil
 }
 
-func (r *RedisEngine) Add(key string, content string) error {
+func (r *RedisEngine) Add(key string, content string,maxLen int64) error {
 
 	args := &redis.XAddArgs{
-		MaxLen: 100000,
+		MaxLen: maxLen,
 		Stream: key,
 		Values: map[string]interface{}{
 			"content": content,
